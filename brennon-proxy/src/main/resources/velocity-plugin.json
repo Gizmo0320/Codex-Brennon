@@ -1,0 +1,8 @@
+{
+  "id": "brennon",
+  "name": "Brennon",
+  "version": "2.0.0-SNAPSHOT",
+  "description": "Brennon Network Core System",
+  "authors": ["Envarcade"],
+  "main": "com.envarcade.brennon.proxy.BrennonVelocity"
+}

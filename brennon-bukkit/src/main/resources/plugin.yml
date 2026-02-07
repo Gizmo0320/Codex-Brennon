@@ -1,0 +1,8 @@
+name: Brennon
+version: '2.0.0-SNAPSHOT'
+main: com.envarcade.brennon.bukkit.BrennonBukkit
+api-version: '1.20'
+description: Brennon Network Core System
+authors: [Envarcade]
+softdepend: []
+load: STARTUP

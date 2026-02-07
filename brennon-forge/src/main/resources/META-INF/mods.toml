@@ -1,0 +1,24 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved"
+
+[[mods]]
+modId="brennon"
+version="2.0.0-SNAPSHOT"
+displayName="Brennon Network Core"
+description="Cross-platform Minecraft Network Core System"
+authors="Envarcade"
+
+[[dependencies.brennon]]
+modId="forge"
+mandatory=true
+versionRange="[47,)"
+ordering="NONE"
+side="SERVER"
+
+[[dependencies.brennon]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,)"
+ordering="NONE"
+side="SERVER"

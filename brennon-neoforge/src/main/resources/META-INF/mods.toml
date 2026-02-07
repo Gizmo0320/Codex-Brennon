@@ -1,0 +1,24 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "All Rights Reserved"
+
+[[mods]]
+modId = "brennon"
+version = "${version}"
+displayName = "Brennon Network Core"
+description = "Brennon Network Core — Cross-platform server management system."
+authors = "Envarcade"
+
+[[dependencies.brennon]]
+modId = "neoforge"
+type = "required"
+versionRange = "[20.4,)"
+ordering = "NONE"
+side = "SERVER"
+
+[[dependencies.brennon]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.20.4,)"
+ordering = "NONE"
+side = "SERVER"
