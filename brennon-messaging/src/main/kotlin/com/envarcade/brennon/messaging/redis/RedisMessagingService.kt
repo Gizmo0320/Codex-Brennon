@@ -3,6 +3,7 @@ package com.envarcade.brennon.messaging.redis
 import com.envarcade.brennon.api.messaging.MessageHandler
 import com.envarcade.brennon.api.messaging.MessagingService
 import com.envarcade.brennon.common.config.RedisConfig
+import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.JedisPoolConfig
 import redis.clients.jedis.JedisPubSub
@@ -72,7 +73,7 @@ class RedisMessagingService(private val config: RedisConfig) : MessagingService 
 
         executor.submit {
             try {
-                jedisPool.resource.use { jedis ->
+                createSubscriberConnection().use { jedis ->
                     jedis.subscribe(pubSub, prefixedChannel)
                 }
             } catch (e: Exception) {
@@ -110,4 +111,15 @@ class RedisMessagingService(private val config: RedisConfig) : MessagingService 
     }
 
     fun getPool(): JedisPool = jedisPool
+
+    private fun createSubscriberConnection(): Jedis {
+        val jedis = Jedis(config.host, config.port, config.timeout)
+        if (config.password.isNotBlank()) {
+            jedis.auth(config.password)
+        }
+        if (config.database != 0) {
+            jedis.select(config.database)
+        }
+        return jedis
+    }
 }
