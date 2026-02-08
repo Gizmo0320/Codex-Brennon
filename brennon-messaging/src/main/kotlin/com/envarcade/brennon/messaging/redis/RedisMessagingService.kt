@@ -24,11 +24,11 @@ class RedisMessagingService(private val config: RedisConfig) : MessagingService 
     fun initialize() {
         val poolConfig = JedisPoolConfig().apply {
             maxTotal = config.poolSize
-            maxIdle = config.poolSize / 2
+            maxIdle = maxOf(1, config.poolSize / 2)
             minIdle = 1
             testOnBorrow = true
             testWhileIdle = true
-            blockWhenExhausted = false
+            blockWhenExhausted = true
             setMaxWait(Duration.ofMillis(config.timeout.toLong()))
         }
 
