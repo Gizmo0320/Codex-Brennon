@@ -27,6 +27,8 @@ class RedisMessagingService(private val config: RedisConfig) : MessagingService 
             minIdle = 1
             testOnBorrow = true
             testWhileIdle = true
+            blockWhenExhausted = false
+            maxWaitMillis = config.timeout.toLong()
         }
 
         jedisPool = if (config.password.isNotBlank()) {
