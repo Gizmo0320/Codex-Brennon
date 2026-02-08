@@ -1,6 +1,7 @@
 package com.envarcade.brennon.bukkit.listener
 
 import com.envarcade.brennon.core.Brennon
+import net.kyori.adventure.text.Component
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -35,7 +36,7 @@ class BukkitPlayerListener(private val brennon: Brennon) : Listener {
             if (isIpBanned) {
                 event.disallow(
                     AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
-                    "§c§lYou are IP banned from this network."
+                    Component.text("§c§lYou are IP banned from this network.")
                 )
                 return
             }
@@ -61,7 +62,7 @@ class BukkitPlayerListener(private val brennon: Brennon) : Listener {
                         appendLine()
                         appendLine("§7ID: §f${ban.id}")
                     }
-                    event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, message)
+                    event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, Component.text(message))
                 }
             }
         } catch (e: Throwable) {

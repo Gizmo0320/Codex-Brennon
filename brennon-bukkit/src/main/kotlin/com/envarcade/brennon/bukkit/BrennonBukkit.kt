@@ -9,6 +9,7 @@ import com.envarcade.brennon.bukkit.luckperms.EditorUrlCapture
 import com.envarcade.brennon.core.Brennon
 import com.envarcade.brennon.messaging.channel.Channels
 import com.google.gson.JsonParser
+import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -42,8 +43,9 @@ class BrennonBukkit : JavaPlugin() {
 
             // Remove existing attachments and re-apply
             for (info in player.effectivePermissions) {
-                if (info.attachment != null && info.attachment!!.plugin?.name == "Brennon") {
-                    player.removeAttachment(info.attachment!!)
+                val attachment = info.attachment ?: continue
+                if (attachment.plugin.name == "Brennon") {
+                    player.removeAttachment(attachment)
                 }
             }
 
@@ -76,7 +78,7 @@ class BrennonBukkit : JavaPlugin() {
         // Set GUI platform hooks
         brennon.coreGuiManager.guiOpener = openGui@{ uuid, gui ->
             val player = server.getPlayer(uuid) ?: return@openGui
-            val inventory = Bukkit.createInventory(null, gui.rows * 9, gui.title)
+            val inventory = Bukkit.createInventory(null, gui.rows * 9, Component.text(gui.title))
 
             for ((slot, item) in gui.items) {
                 val material = Material.matchMaterial(item.material) ?: Material.STONE

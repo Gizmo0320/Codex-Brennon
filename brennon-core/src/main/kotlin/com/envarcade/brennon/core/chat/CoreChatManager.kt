@@ -111,7 +111,7 @@ class CoreChatManager(
 
     override fun setPlayerChannel(player: UUID, channelId: String) {
         val oldChannelId = playerChannels[player] ?: config.chat.defaultChannel
-        val channel = channels[channelId] ?: return
+        if (!channels.containsKey(channelId)) return
         playerChannels[player] = channelId
         eventBus.publish(ChannelSwitchEvent(player, oldChannelId, channelId))
     }

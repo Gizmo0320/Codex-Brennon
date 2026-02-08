@@ -95,10 +95,11 @@ class CoreRankManager(
         defaultRank ?: throw IllegalStateException("No default rank configured!")
 
     override fun setPlayerRank(uuid: UUID, rankId: String): CompletableFuture<Void> {
-        val rank = ranks[rankId]
-            ?: return CompletableFuture.failedFuture(
+        if (!ranks.containsKey(rankId)) {
+            return CompletableFuture.failedFuture(
                 IllegalArgumentException("Rank '$rankId' does not exist.")
             )
+        }
 
         return database.players.findByUuid(uuid).thenCompose { data ->
             if (data == null) {

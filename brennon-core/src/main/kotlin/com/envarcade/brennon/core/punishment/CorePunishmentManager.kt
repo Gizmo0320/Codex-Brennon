@@ -188,7 +188,7 @@ class CorePunishmentManager(
             }
             statsTracker?.invoke(uuid, statId)
 
-            punishment as Punishment
+            punishment
         }
     }
 
