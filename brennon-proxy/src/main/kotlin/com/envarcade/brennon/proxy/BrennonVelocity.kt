@@ -93,6 +93,47 @@ class BrennonVelocity @Inject constructor(
             }
         }
 
+        // Subscribe to staff alerts (punishment notifications)
+        brennon.redisMessaging.subscribe(com.envarcade.brennon.messaging.channel.Channels.STAFF_ALERT) { _, message ->
+            try {
+                val json = com.google.gson.JsonParser.parseString(message).asJsonObject
+                if (json.get("type")?.asString == "punishment") {
+                    val action = json.get("action")?.asString ?: return@subscribe
+                    val punishmentType = json.get("punishmentType")?.asString ?: return@subscribe
+                    val target = json.get("target")?.asString ?: return@subscribe
+                    val targetName = brennon.corePlayerManager.getCachedPlayer(
+                        java.util.UUID.fromString(target)
+                    )?.getName() ?: target
+
+                    val alertComponent = if (action == "issued") {
+                        val issuer = json.get("issuer")?.asString ?: "CONSOLE"
+                        val reason = json.get("reason")?.asString ?: ""
+                        net.kyori.adventure.text.Component.text("[Staff] ", net.kyori.adventure.text.format.NamedTextColor.YELLOW)
+                            .append(net.kyori.adventure.text.Component.text("$punishmentType ", net.kyori.adventure.text.format.NamedTextColor.RED))
+                            .append(net.kyori.adventure.text.Component.text("issued to ", net.kyori.adventure.text.format.NamedTextColor.YELLOW))
+                            .append(net.kyori.adventure.text.Component.text("$targetName ", net.kyori.adventure.text.format.NamedTextColor.WHITE))
+                            .append(net.kyori.adventure.text.Component.text("by ", net.kyori.adventure.text.format.NamedTextColor.YELLOW))
+                            .append(net.kyori.adventure.text.Component.text("$issuer: ", net.kyori.adventure.text.format.NamedTextColor.WHITE))
+                            .append(net.kyori.adventure.text.Component.text(reason, net.kyori.adventure.text.format.NamedTextColor.GRAY))
+                    } else {
+                        val revokedBy = json.get("revokedBy")?.asString ?: "CONSOLE"
+                        net.kyori.adventure.text.Component.text("[Staff] ", net.kyori.adventure.text.format.NamedTextColor.YELLOW)
+                            .append(net.kyori.adventure.text.Component.text("$punishmentType ", net.kyori.adventure.text.format.NamedTextColor.GREEN))
+                            .append(net.kyori.adventure.text.Component.text("revoked for ", net.kyori.adventure.text.format.NamedTextColor.YELLOW))
+                            .append(net.kyori.adventure.text.Component.text("$targetName ", net.kyori.adventure.text.format.NamedTextColor.WHITE))
+                            .append(net.kyori.adventure.text.Component.text("by ", net.kyori.adventure.text.format.NamedTextColor.YELLOW))
+                            .append(net.kyori.adventure.text.Component.text(revokedBy, net.kyori.adventure.text.format.NamedTextColor.WHITE))
+                    }
+
+                    for (player in server.allPlayers) {
+                        if (player.hasPermission("brennon.staff.alerts")) {
+                            player.sendMessage(alertComponent)
+                        }
+                    }
+                }
+            } catch (_: Exception) { }
+        }
+
         // Register listeners
         server.eventManager.register(this, ProxyPlayerListener(brennon, server))
         if (brennon.config.modules.chat) {

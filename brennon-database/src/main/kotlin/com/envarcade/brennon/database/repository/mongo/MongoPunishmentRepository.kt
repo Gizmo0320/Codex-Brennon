@@ -73,6 +73,39 @@ class MongoPunishmentRepository(
         }
     }
 
+    override fun findActiveByIp(ip: String): CompletableFuture<List<PunishmentData>> {
+        return CompletableFuture.supplyAsync {
+            collection.find(
+                withNetworkFilter(
+                    Filters.eq("targetIp", ip),
+                    Filters.eq("type", "IP_BAN"),
+                    Filters.eq("active", true)
+                )
+            ).map { fromDocument(it) }.toList()
+        }
+    }
+
+    override fun findAllByType(type: PunishmentType, limit: Int, offset: Int): CompletableFuture<List<PunishmentData>> {
+        return CompletableFuture.supplyAsync {
+            collection.find(
+                withNetworkFilter(Filters.eq("type", type.name))
+            )
+                .sort(Document("issuedAt", -1))
+                .skip(offset)
+                .limit(limit)
+                .map { fromDocument(it) }
+                .toList()
+        }
+    }
+
+    override fun countByType(type: PunishmentType): CompletableFuture<Int> {
+        return CompletableFuture.supplyAsync {
+            collection.countDocuments(
+                withNetworkFilter(Filters.eq("type", type.name))
+            ).toInt()
+        }
+    }
+
     override fun save(punishment: PunishmentData): CompletableFuture<Void> {
         return CompletableFuture.runAsync {
             val doc = toDocument(punishment)
@@ -104,6 +137,7 @@ class MongoPunishmentRepository(
             put("revokedAt", punishment.revokedAt?.toEpochMilli())
             put("revokeReason", punishment.revokeReason)
             put("networkId", punishment.networkId ?: networkId)
+            put("targetIp", punishment.targetIp)
         }
     }
 
@@ -120,7 +154,8 @@ class MongoPunishmentRepository(
             revokedBy = doc.getString("revokedBy")?.let { UUID.fromString(it) },
             revokedAt = doc.getLong("revokedAt")?.let { Instant.ofEpochMilli(it) },
             revokeReason = doc.getString("revokeReason"),
-            networkId = doc.getString("networkId")
+            networkId = doc.getString("networkId"),
+            targetIp = doc.getString("targetIp")
         )
     }
 }

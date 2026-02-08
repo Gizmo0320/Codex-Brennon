@@ -119,6 +119,46 @@ class SQLPlayerRepository(private val driver: SQLDatabaseDriver) : PlayerReposit
         }
     }
 
+    override fun findByIp(ip: String): CompletableFuture<List<PlayerData>> {
+        return CompletableFuture.supplyAsync {
+            driver.getConnection().use { conn ->
+                conn.prepareStatement("SELECT * FROM brennon_players WHERE ip_address = ?").use { stmt ->
+                    stmt.setString(1, ip)
+                    val rs = stmt.executeQuery()
+                    val list = mutableListOf<PlayerData>()
+                    while (rs.next()) list.add(fromResultSet(rs))
+                    list
+                }
+            }
+        }
+    }
+
+    override fun countAll(): CompletableFuture<Long> {
+        return CompletableFuture.supplyAsync {
+            driver.getConnection().use { conn ->
+                conn.prepareStatement("SELECT COUNT(*) FROM brennon_players").use { stmt ->
+                    val rs = stmt.executeQuery()
+                    if (rs.next()) rs.getLong(1) else 0L
+                }
+            }
+        }
+    }
+
+    override fun findRecent(limit: Int, offset: Int): CompletableFuture<List<PlayerData>> {
+        return CompletableFuture.supplyAsync {
+            driver.getConnection().use { conn ->
+                conn.prepareStatement("SELECT * FROM brennon_players ORDER BY last_seen DESC LIMIT ? OFFSET ?").use { stmt ->
+                    stmt.setInt(1, limit)
+                    stmt.setInt(2, offset)
+                    val rs = stmt.executeQuery()
+                    val list = mutableListOf<PlayerData>()
+                    while (rs.next()) list.add(fromResultSet(rs))
+                    list
+                }
+            }
+        }
+    }
+
     private fun fromResultSet(rs: java.sql.ResultSet): PlayerData {
         val setType = object : TypeToken<MutableSet<String>>() {}.type
         val mapType = object : TypeToken<MutableMap<String, String>>() {}.type

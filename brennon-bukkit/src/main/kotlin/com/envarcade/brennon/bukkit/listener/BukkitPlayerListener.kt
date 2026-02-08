@@ -22,10 +22,30 @@ class BukkitPlayerListener(private val brennon: Brennon) : Listener {
     fun onPreLogin(event: AsyncPlayerPreLoginEvent) {
         try {
             val uuid = event.uniqueId
-            val isBanned = brennon.corePunishmentManager.isBanned(uuid).join()
+
+            // Check IP ban
+            val ip = event.address.hostAddress
+            val isIpBanned = try {
+                brennon.corePunishmentManager.isIpBanned(ip)
+                    .get(5, java.util.concurrent.TimeUnit.SECONDS)
+            } catch (e: Throwable) {
+                println("[Brennon] IP ban check failed for ${event.name}: ${e.message}")
+                false
+            }
+            if (isIpBanned) {
+                event.disallow(
+                    AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
+                    "§c§lYou are IP banned from this network."
+                )
+                return
+            }
+
+            val isBanned = brennon.corePunishmentManager.isBanned(uuid)
+                .get(5, java.util.concurrent.TimeUnit.SECONDS)
 
             if (isBanned) {
-                val punishments = brennon.corePunishmentManager.getActivePunishments(uuid).join()
+                val punishments = brennon.corePunishmentManager.getActivePunishments(uuid)
+                    .get(5, java.util.concurrent.TimeUnit.SECONDS)
                 val ban = punishments.firstOrNull { it.type.name == "BAN" && it.isActive }
 
                 if (ban != null) {
@@ -44,8 +64,9 @@ class BukkitPlayerListener(private val brennon: Brennon) : Listener {
                     event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, message)
                 }
             }
-        } catch (e: Exception) {
-            println("[Brennon] Error during pre-login check for ${event.name}: ${e.message}")
+        } catch (e: Throwable) {
+            println("[Brennon] Error during pre-login check for ${event.name}: ${e.javaClass.simpleName}: ${e.message}")
+            e.printStackTrace()
             // Allow login on error — don't block players due to DB issues
         }
     }

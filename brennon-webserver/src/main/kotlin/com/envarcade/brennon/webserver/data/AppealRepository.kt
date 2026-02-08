@@ -170,6 +170,43 @@ class AppealRepository(private val databaseManager: DatabaseManager) {
         }
     }
 
+    fun getByPunishmentIds(ids: List<String>): Map<String, AppealData> {
+        if (ids.isEmpty()) return emptyMap()
+        val driver = databaseManager.driver
+        return when (driver) {
+            is MongoDatabaseDriver -> {
+                val filter = com.mongodb.client.model.Filters.`in`("punishmentId", ids)
+                driver.getDatabase().getCollection("appeals")
+                    .find(filter)
+                    .sort(Document("createdAt", -1))
+                    .map { docToAppeal(it) }
+                    .toList()
+                    .associateBy { it.punishmentId }
+            }
+            is SQLDatabaseDriver -> {
+                val placeholders = ids.joinToString(",") { "?" }
+                val results = mutableMapOf<String, AppealData>()
+                driver.getConnection().use { conn ->
+                    conn.prepareStatement(
+                        "SELECT * FROM brennon_appeals WHERE punishment_id IN ($placeholders) ORDER BY created_at DESC"
+                    ).use { stmt ->
+                        ids.forEachIndexed { index, id -> stmt.setString(index + 1, id) }
+                        val rs = stmt.executeQuery()
+                        while (rs.next()) {
+                            val appeal = rsToAppeal(rs)
+                            // Keep the latest appeal per punishment
+                            if (!results.containsKey(appeal.punishmentId)) {
+                                results[appeal.punishmentId] = appeal
+                            }
+                        }
+                    }
+                }
+                results
+            }
+            else -> emptyMap()
+        }
+    }
+
     fun hasPendingAppeal(punishmentId: String): Boolean {
         val driver = databaseManager.driver
         return when (driver) {

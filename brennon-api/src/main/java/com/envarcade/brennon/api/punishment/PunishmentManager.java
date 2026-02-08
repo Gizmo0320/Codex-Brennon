@@ -26,4 +26,10 @@ public interface PunishmentManager {
     CompletableFuture<Boolean> isBanned(UUID uuid);
 
     CompletableFuture<Boolean> isMuted(UUID uuid);
+
+    CompletableFuture<Punishment> ipBan(UUID target, String ip, String reason, Duration duration, UUID issuer);
+
+    CompletableFuture<Boolean> isIpBanned(String ip);
+
+    CompletableFuture<Void> unIpBan(String ip, UUID issuer);
 }

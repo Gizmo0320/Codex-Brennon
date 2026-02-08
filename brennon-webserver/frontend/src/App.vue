@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
+import PublicNavbar from './components/PublicNavbar.vue'
 import api from './api'
 import { wsClient } from './ws'
 
@@ -10,9 +11,12 @@ const route = useRoute()
 const modules = ref<Record<string, boolean>>({})
 const isLoggedIn = computed(() => !!localStorage.getItem('brennon_token'))
 const isPlayerRole = computed(() => localStorage.getItem('brennon_role') === 'player')
+const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 const isPortalRoute = computed(() => route.path.startsWith('/portal'))
 const isLoginRoute = computed(() => route.path === '/login' || route.path === '/player-login')
-const showSidebar = computed(() => isLoggedIn.value && !isLoginRoute.value && !isPortalRoute.value && !isPlayerRole.value)
+const isPublicRoute = computed(() => !isAdminRoute.value && !isPortalRoute.value && !isLoginRoute.value)
+const showSidebar = computed(() => isLoggedIn.value && isAdminRoute.value && !isPlayerRole.value)
+const showPublicNavbar = computed(() => isPublicRoute.value)
 
 onMounted(async () => {
   if (isLoggedIn.value && !isPlayerRole.value) {
@@ -31,8 +35,9 @@ onMounted(async () => {
 
 <template>
   <div class="app-layout">
+    <PublicNavbar v-if="showPublicNavbar" />
     <Sidebar v-if="showSidebar" :modules="modules" />
-    <main :class="{ 'with-sidebar': showSidebar }">
+    <main :class="{ 'with-sidebar': showSidebar, 'with-navbar': showPublicNavbar }">
       <router-view :key="route.fullPath" />
     </main>
   </div>
@@ -46,12 +51,15 @@ onMounted(async () => {
   --bg-input: #374151;
   --text-primary: #e5e7eb;
   --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
   --accent: #6366f1;
   --accent-hover: #818cf8;
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
+  --border: #374151;
   --sidebar-width: 240px;
+  --navbar-height: 60px;
 }
 
 body {
@@ -73,6 +81,10 @@ main {
 
 main.with-sidebar {
   margin-left: var(--sidebar-width);
+}
+
+main.with-navbar {
+  margin-top: var(--navbar-height);
 }
 
 a { color: var(--accent); text-decoration: none; }

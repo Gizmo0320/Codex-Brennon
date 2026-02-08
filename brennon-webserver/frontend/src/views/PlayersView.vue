@@ -20,7 +20,7 @@ async function searchPlayer() {
   try {
     const res = await api.get(`/players/name/${searchName.value}`)
     searchResult.value = res.data
-    router.push(`/players/${res.data.uuid}`)
+    router.push(`/admin/players/${res.data.uuid}`)
   } catch {
     searchResult.value = null
     alert('Player not found')
@@ -52,7 +52,7 @@ async function searchPlayer() {
           <tr v-for="p in players" :key="p.uuid">
             <td>{{ p.name }}</td>
             <td>{{ p.server }}</td>
-            <td><router-link :to="`/players/${p.uuid}`">View</router-link></td>
+            <td><router-link :to="`/admin/players/${p.uuid}`">View</router-link></td>
           </tr>
           <tr v-if="players.length === 0">
             <td colspan="3" style="text-align: center; color: var(--text-secondary);">No players online</td>

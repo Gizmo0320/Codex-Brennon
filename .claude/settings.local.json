@@ -42,7 +42,9 @@
       "WebFetch(domain:docs.papermc.io)",
       "WebFetch(domain:jd.advntr.dev)",
       "Bash(\"F:\\\\Github\\\\Brennon 2.0\\\\gradlew.bat\" --project-dir \"F:\\\\Github\\\\Brennon 2.0\" :brennon-core:compileKotlin :brennon-webserver:compileKotlin)",
-      "Bash(bash -c:*)"
+      "Bash(bash -c:*)",
+      "Bash(findstr:*)",
+      "Bash(F:/Github/\"Brennon 2.0\"/gradlew.bat build)"
     ]
   }
 }

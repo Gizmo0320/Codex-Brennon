@@ -92,6 +92,38 @@ class CorePunishmentManager(
         }
     }
 
+    override fun ipBan(target: UUID, ip: String, reason: String, duration: Duration?, issuer: UUID?): CompletableFuture<Punishment> {
+        return issuePunishment(target, PunishmentType.IP_BAN, reason, duration, issuer, targetIp = ip).thenApply { punishment ->
+            kickIfOnline(target, formatBanMessage(punishment))
+            punishment
+        }
+    }
+
+    override fun isIpBanned(ip: String): CompletableFuture<Boolean> {
+        return database.punishments.findActiveByIp(ip).thenApply { list ->
+            list.any { it.isEffectivelyActive() }
+        }
+    }
+
+    override fun unIpBan(ip: String, issuer: UUID?): CompletableFuture<Void> {
+        return database.punishments.findActiveByIp(ip).thenCompose { list ->
+            val futures = list.filter { it.isEffectivelyActive() }.map { data ->
+                data.active = false
+                data.revokedBy = issuer
+                data.revokedAt = Instant.now()
+                database.punishments.save(data).thenRun {
+                    eventBus.publish(PunishmentRevokedEvent(data.id, data.target, issuer, PunishmentType.IP_BAN))
+                }
+            }
+            CompletableFuture.allOf(*futures.toTypedArray()).thenRun {
+                messaging.publish(Channels.PUNISHMENT_REVOKED, """
+                    {"target":"$ip","type":"IP_BAN","revokedBy":"${issuer ?: "CONSOLE"}"}
+                """.trimIndent())
+                println("[Brennon] IP_BAN revoked for $ip")
+            }
+        }
+    }
+
     // ============================================================
     // Internal Methods
     // ============================================================
@@ -104,7 +136,8 @@ class CorePunishmentManager(
         type: PunishmentType,
         reason: String,
         duration: Duration?,
-        issuer: UUID?
+        issuer: UUID?,
+        targetIp: String? = null
     ): CompletableFuture<Punishment> {
         val id = UUIDUtil.generateId()
         val expiresAt = duration?.let { Instant.now().plus(it) }
@@ -118,7 +151,8 @@ class CorePunishmentManager(
             issuedAt = Instant.now(),
             expiresAt = expiresAt,
             active = true,
-            networkId = networkId
+            networkId = networkId,
+            targetIp = targetIp
         )
 
         return database.punishments.save(data).thenApply {
@@ -139,12 +173,18 @@ class CorePunishmentManager(
 
             println("[Brennon] ${type.name} issued to $uuid: $reason (ID: $id)")
 
+            // Staff notification
+            messaging.publish(Channels.STAFF_ALERT, """
+                {"type":"punishment","action":"issued","punishmentType":"${type.name}","target":"$uuid","reason":"$reason","issuer":"${issuer ?: "CONSOLE"}","duration":"${duration?.toMillis()}"}
+            """.trimIndent())
+
             // Track stats
             val statId = when (type) {
                 PunishmentType.BAN -> com.envarcade.brennon.api.stats.StatTypes.TIMES_BANNED
                 PunishmentType.MUTE -> com.envarcade.brennon.api.stats.StatTypes.TIMES_MUTED
                 PunishmentType.KICK -> com.envarcade.brennon.api.stats.StatTypes.TIMES_KICKED
                 PunishmentType.WARN -> com.envarcade.brennon.api.stats.StatTypes.TIMES_WARNED
+                PunishmentType.IP_BAN -> com.envarcade.brennon.api.stats.StatTypes.TIMES_IP_BANNED
             }
             statsTracker?.invoke(uuid, statId)
 
@@ -169,6 +209,12 @@ class CorePunishmentManager(
                 messaging.publish(Channels.PUNISHMENT_REVOKED, """
                     {"target":"$uuid","type":"${type.name}","revokedBy":"${revokedBy ?: "CONSOLE"}"}
                 """.trimIndent())
+
+                // Staff notification
+                messaging.publish(Channels.STAFF_ALERT, """
+                    {"type":"punishment","action":"revoked","punishmentType":"${type.name}","target":"$uuid","revokedBy":"${revokedBy ?: "CONSOLE"}"}
+                """.trimIndent())
+
                 println("[Brennon] ${type.name} revoked for $uuid")
             }
         }
@@ -178,10 +224,8 @@ class CorePunishmentManager(
      * Kicks a player from the network if they're online.
      */
     private fun kickIfOnline(uuid: UUID, message: String) {
-        // This will be handled by the platform layer (Bukkit/Velocity)
-        // by listening to PunishmentIssuedEvent or via Redis
-        messaging.publish(Channels.COMMAND_SYNC, """
-            {"action":"kick","uuid":"$uuid","message":"$message"}
+        messaging.publish(Channels.PLAYER_KICK, """
+            {"uuid":"$uuid","reason":"$message"}
         """.trimIndent())
     }
 

@@ -209,7 +209,7 @@ fun main(args: Array<String>) {
     AppealRoutes(brennon, appealRepository, jwtAuth, webConfig).register(app)
     PlayerProfileRoutes(brennon, jwtAuth, webConfig).register(app)
     AdminPlayerRoutes(brennon, jwtAuth, webConfig).register(app)
-    PublicRoutes(brennon).register(app)
+    PublicRoutes(brennon, appealRepository).register(app)
 
     if (brennon.config.modules.tickets) {
         PlayerTicketRoutes(brennon, jwtAuth, webConfig).register(app)

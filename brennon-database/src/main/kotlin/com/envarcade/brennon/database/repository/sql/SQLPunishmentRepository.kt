@@ -25,8 +25,8 @@ class SQLPunishmentRepository(
 
     private val upsertSQL: String = if (driver.isPostgres) {
         """
-        INSERT INTO brennon_punishments (id, target, issuer, type, reason, issued_at, expires_at, active, revoked_by, revoked_at, revoke_reason, network_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO brennon_punishments (id, target, issuer, type, reason, issued_at, expires_at, active, revoked_by, revoked_at, revoke_reason, network_id, target_ip)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT (id) DO UPDATE SET
             active = EXCLUDED.active,
             revoked_by = EXCLUDED.revoked_by,
@@ -35,8 +35,8 @@ class SQLPunishmentRepository(
         """.trimIndent()
     } else {
         """
-        INSERT INTO brennon_punishments (id, target, issuer, type, reason, issued_at, expires_at, active, revoked_by, revoked_at, revoke_reason, network_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO brennon_punishments (id, target, issuer, type, reason, issued_at, expires_at, active, revoked_by, revoked_at, revoke_reason, network_id, target_ip)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             active = VALUES(active),
             revoked_by = VALUES(revoked_by),
@@ -116,6 +116,69 @@ class SQLPunishmentRepository(
         }
     }
 
+    override fun findActiveByIp(ip: String): CompletableFuture<List<PunishmentData>> {
+        return CompletableFuture.supplyAsync {
+            driver.getConnection().use { conn ->
+                val sql = buildString {
+                    append("SELECT * FROM brennon_punishments WHERE target_ip = ? AND type = 'IP_BAN' AND active = TRUE")
+                    if (isNetworkScoped) append(" AND network_id = ?")
+                }
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setString(1, ip)
+                    if (isNetworkScoped) stmt.setString(2, networkId!!)
+                    val rs = stmt.executeQuery()
+                    val list = mutableListOf<PunishmentData>()
+                    while (rs.next()) list.add(fromResultSet(rs))
+                    list
+                }
+            }
+        }
+    }
+
+    override fun findAllByType(type: PunishmentType, limit: Int, offset: Int): CompletableFuture<List<PunishmentData>> {
+        return CompletableFuture.supplyAsync {
+            driver.getConnection().use { conn ->
+                val sql = buildString {
+                    append("SELECT * FROM brennon_punishments WHERE type = ?")
+                    if (isNetworkScoped) append(" AND network_id = ?")
+                    append(" ORDER BY issued_at DESC LIMIT ? OFFSET ?")
+                }
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setString(1, type.name)
+                    if (isNetworkScoped) {
+                        stmt.setString(2, networkId!!)
+                        stmt.setInt(3, limit)
+                        stmt.setInt(4, offset)
+                    } else {
+                        stmt.setInt(2, limit)
+                        stmt.setInt(3, offset)
+                    }
+                    val rs = stmt.executeQuery()
+                    val list = mutableListOf<PunishmentData>()
+                    while (rs.next()) list.add(fromResultSet(rs))
+                    list
+                }
+            }
+        }
+    }
+
+    override fun countByType(type: PunishmentType): CompletableFuture<Int> {
+        return CompletableFuture.supplyAsync {
+            driver.getConnection().use { conn ->
+                val sql = buildString {
+                    append("SELECT COUNT(*) FROM brennon_punishments WHERE type = ?")
+                    if (isNetworkScoped) append(" AND network_id = ?")
+                }
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setString(1, type.name)
+                    if (isNetworkScoped) stmt.setString(2, networkId!!)
+                    val rs = stmt.executeQuery()
+                    if (rs.next()) rs.getInt(1) else 0
+                }
+            }
+        }
+    }
+
     override fun save(punishment: PunishmentData): CompletableFuture<Void> {
         return CompletableFuture.runAsync {
             driver.getConnection().use { conn ->
@@ -140,6 +203,7 @@ class SQLPunishmentRepository(
                     }
                     stmt.setString(11, punishment.revokeReason)
                     stmt.setString(12, punishment.networkId ?: networkId)
+                    stmt.setString(13, punishment.targetIp)
                     stmt.executeUpdate()
                 }
             }
@@ -170,7 +234,8 @@ class SQLPunishmentRepository(
             revokedBy = rs.getString("revoked_by")?.let { UUID.fromString(it) },
             revokedAt = rs.getLong("revoked_at").let { if (rs.wasNull()) null else Instant.ofEpochMilli(it) },
             revokeReason = rs.getString("revoke_reason"),
-            networkId = rs.getString("network_id")
+            networkId = rs.getString("network_id"),
+            targetIp = rs.getString("target_ip")
         )
     }
 }

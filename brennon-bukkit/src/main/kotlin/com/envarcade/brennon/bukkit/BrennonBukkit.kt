@@ -134,6 +134,36 @@ class BrennonBukkit : JavaPlugin() {
             }
         }
 
+        // Subscribe to staff alerts (punishment notifications)
+        brennon.redisMessaging.subscribe(Channels.STAFF_ALERT) { _, message ->
+            try {
+                val json = JsonParser.parseString(message).asJsonObject
+                if (json.get("type")?.asString == "punishment") {
+                    val action = json.get("action")?.asString ?: return@subscribe
+                    val punishmentType = json.get("punishmentType")?.asString ?: return@subscribe
+                    val target = json.get("target")?.asString ?: return@subscribe
+                    val targetName = brennon.corePlayerManager.getCachedPlayer(
+                        java.util.UUID.fromString(target)
+                    )?.getName() ?: target
+
+                    val alertMsg = if (action == "issued") {
+                        val issuer = json.get("issuer")?.asString ?: "CONSOLE"
+                        val reason = json.get("reason")?.asString ?: ""
+                        "\u00a7e[Staff] \u00a7c$punishmentType \u00a7eissued to \u00a7f$targetName \u00a7eby \u00a7f$issuer\u00a7e: \u00a77$reason"
+                    } else {
+                        val revokedBy = json.get("revokedBy")?.asString ?: "CONSOLE"
+                        "\u00a7e[Staff] \u00a7a$punishmentType \u00a7erevoked for \u00a7f$targetName \u00a7eby \u00a7f$revokedBy"
+                    }
+
+                    for (player in server.onlinePlayers) {
+                        if (player.hasPermission("brennon.staff.alerts")) {
+                            player.sendMessage(net.kyori.adventure.text.Component.text(alertMsg))
+                        }
+                    }
+                }
+            } catch (_: Exception) { }
+        }
+
         // Register listeners
         server.pluginManager.registerEvents(BukkitPlayerListener(brennon), this)
         server.pluginManager.registerEvents(BukkitChatListener(brennon), this)

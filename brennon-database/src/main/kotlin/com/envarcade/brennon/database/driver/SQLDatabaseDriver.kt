@@ -181,12 +181,18 @@ class SQLDatabaseDriver(
                     )
                 """.trimIndent())
 
+                // Migrations
+                try {
+                    stmt.execute("ALTER TABLE brennon_punishments ADD COLUMN target_ip VARCHAR(45)")
+                } catch (_: Exception) { /* column already exists */ }
+
                 // Create indexes
                 try {
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_players_name ON brennon_players(name)")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_punishments_target ON brennon_punishments(target)")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_punishments_active ON brennon_punishments(target, type, active)")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_punishments_network ON brennon_punishments(network_id)")
+                    stmt.execute("CREATE INDEX IF NOT EXISTS idx_punishments_ip ON brennon_punishments(target_ip, type, active)")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_tickets_creator ON brennon_tickets(creator)")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_tickets_assignee ON brennon_tickets(assignee)")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_tickets_status ON brennon_tickets(status)")
