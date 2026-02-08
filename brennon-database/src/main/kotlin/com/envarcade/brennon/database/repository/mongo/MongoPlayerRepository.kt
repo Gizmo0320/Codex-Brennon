@@ -54,6 +54,31 @@ class MongoPlayerRepository(database: MongoDatabase) : PlayerRepository {
         }
     }
 
+    override fun findByIp(ip: String): CompletableFuture<List<PlayerData>> {
+        return CompletableFuture.supplyAsync {
+            collection.find(Filters.eq("ipAddress", ip))
+                .map { fromDocument(it) }
+                .toList()
+        }
+    }
+
+    override fun countAll(): CompletableFuture<Long> {
+        return CompletableFuture.supplyAsync {
+            collection.countDocuments()
+        }
+    }
+
+    override fun findRecent(limit: Int, offset: Int): CompletableFuture<List<PlayerData>> {
+        return CompletableFuture.supplyAsync {
+            collection.find()
+                .sort(Document("lastSeen", -1))
+                .skip(offset)
+                .limit(limit)
+                .map { fromDocument(it) }
+                .toList()
+        }
+    }
+
     // ============================================================
     // Document Mapping
     // ============================================================

@@ -16,7 +16,8 @@ data class PunishmentData(
     var revokedBy: UUID? = null,
     var revokedAt: Instant? = null,
     var revokeReason: String? = null,
-    val networkId: String? = null
+    val networkId: String? = null,
+    val targetIp: String? = null
 ) {
     fun hasExpired(): Boolean {
         if (expiresAt == null) return false

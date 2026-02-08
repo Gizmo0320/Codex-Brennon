@@ -20,7 +20,7 @@ async function login() {
     })
     localStorage.setItem('brennon_token', res.data.token)
     wsClient.connect()
-    router.push('/')
+    router.push('/admin')
     window.location.reload()
   } catch {
     error.value = 'Invalid username or password'

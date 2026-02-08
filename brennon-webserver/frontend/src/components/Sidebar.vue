@@ -5,19 +5,19 @@ const props = defineProps<{ modules: Record<string, boolean> }>()
 const router = useRouter()
 
 const navItems = [
-  { path: '/', label: 'Dashboard', icon: '~', always: true },
-  { path: '/players', label: 'Players', icon: 'P', always: true },
-  { path: '/ranks', label: 'Ranks', icon: 'R', module: 'ranks' },
-  { path: '/punishments', label: 'Punishments', icon: '!', module: 'punishments' },
-  { path: '/economy', label: 'Economy', icon: '$', module: 'economy' },
-  { path: '/tickets', label: 'Tickets', icon: 'T', module: 'tickets' },
-  { path: '/appeals', label: 'Appeals', icon: 'A', module: 'punishments' },
-  { path: '/stats', label: 'Stats', icon: '#', module: 'stats' },
-  { path: '/servers', label: 'Servers', icon: 'S', module: 'serverManager' },
-  { path: '/pterodactyl', label: 'Pterodactyl', icon: 'D', module: 'pterodactyl' },
-  { path: '/chat', label: 'Chat', icon: 'C', module: 'chat' },
-  { path: '/staff', label: 'Staff', icon: '*', module: 'staffTools' },
-  { path: '/reports', label: 'Reports', icon: '?', module: 'staffTools' }
+  { path: '/admin', label: 'Dashboard', icon: '~', always: true },
+  { path: '/admin/players', label: 'Players', icon: 'P', always: true },
+  { path: '/admin/ranks', label: 'Ranks', icon: 'R', module: 'ranks' },
+  { path: '/admin/punishments', label: 'Punishments', icon: '!', module: 'punishments' },
+  { path: '/admin/economy', label: 'Economy', icon: '$', module: 'economy' },
+  { path: '/admin/tickets', label: 'Tickets', icon: 'T', module: 'tickets' },
+  { path: '/admin/appeals', label: 'Appeals', icon: 'A', module: 'punishments' },
+  { path: '/admin/stats', label: 'Stats', icon: '#', module: 'stats' },
+  { path: '/admin/servers', label: 'Servers', icon: 'S', module: 'serverManager' },
+  { path: '/admin/pterodactyl', label: 'Pterodactyl', icon: 'D', module: 'pterodactyl' },
+  { path: '/admin/chat', label: 'Chat', icon: 'C', module: 'chat' },
+  { path: '/admin/staff', label: 'Staff', icon: '*', module: 'staffTools' },
+  { path: '/admin/reports', label: 'Reports', icon: '?', module: 'staffTools' }
 ]
 
 function isVisible(item: any): boolean {

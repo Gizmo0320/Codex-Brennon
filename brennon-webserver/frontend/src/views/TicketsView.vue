@@ -32,7 +32,7 @@ function priorityColor(p: string): string {
           <tr><th>ID</th><th>Subject</th><th>Creator</th><th>Status</th><th>Priority</th><th>Assignee</th></tr>
         </thead>
         <tbody>
-          <tr v-for="t in tickets" :key="t.id" @click="router.push(`/tickets/${t.id}`)" style="cursor: pointer;">
+          <tr v-for="t in tickets" :key="t.id" @click="router.push(`/admin/tickets/${t.id}`)" style="cursor: pointer;">
             <td>{{ t.id }}</td>
             <td>{{ t.subject }}</td>
             <td>{{ t.creatorName }}</td>

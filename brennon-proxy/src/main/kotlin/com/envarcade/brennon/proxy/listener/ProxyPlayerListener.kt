@@ -32,10 +32,28 @@ class ProxyPlayerListener(
         val uuid = player.uniqueId
 
         try {
-            val isBanned = brennon.corePunishmentManager.isBanned(uuid).join()
+            // Check IP ban
+            val ip = player.remoteAddress.address.hostAddress
+            val isIpBanned = try {
+                brennon.corePunishmentManager.isIpBanned(ip)
+                    .get(5, java.util.concurrent.TimeUnit.SECONDS)
+            } catch (e: Throwable) {
+                println("[Brennon] IP ban check failed for ${player.username}: ${e.message}")
+                false
+            }
+            if (isIpBanned) {
+                event.result = ResultedEvent.ComponentResult.denied(
+                    Component.text("You are IP banned from this network.", NamedTextColor.RED)
+                )
+                return
+            }
+
+            val isBanned = brennon.corePunishmentManager.isBanned(uuid)
+                .get(5, java.util.concurrent.TimeUnit.SECONDS)
 
             if (isBanned) {
-                val punishments = brennon.corePunishmentManager.getActivePunishments(uuid).join()
+                val punishments = brennon.corePunishmentManager.getActivePunishments(uuid)
+                    .get(5, java.util.concurrent.TimeUnit.SECONDS)
                 val ban = punishments.firstOrNull { it.type.name == "BAN" && it.isActive }
 
                 if (ban != null) {
@@ -66,11 +84,12 @@ class ProxyPlayerListener(
             }
 
             // Pre-load player data on the proxy
-            val ip = player.remoteAddress.address.hostAddress
-            brennon.corePlayerManager.handleJoin(uuid, player.username, "proxy", ip).join()
+            brennon.corePlayerManager.handleJoin(uuid, player.username, "proxy", ip)
+                .get(5, java.util.concurrent.TimeUnit.SECONDS)
 
-        } catch (e: Exception) {
-            println("[Brennon] Error during proxy login for ${player.username}: ${e.message}")
+        } catch (e: Throwable) {
+            println("[Brennon] Error during proxy login for ${player.username}: ${e.javaClass.simpleName}: ${e.message}")
+            e.printStackTrace()
             // Allow login on error
         }
     }

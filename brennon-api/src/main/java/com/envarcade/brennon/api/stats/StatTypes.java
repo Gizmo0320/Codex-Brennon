@@ -35,6 +35,7 @@ public final class StatTypes {
     public static final String TIMES_MUTED = "times_muted";
     public static final String TIMES_KICKED = "times_kicked";
     public static final String TIMES_WARNED = "times_warned";
+    public static final String TIMES_IP_BANNED = "times_ip_banned";
 
     // Reports
     public static final String REPORTS_FILED = "reports_filed";

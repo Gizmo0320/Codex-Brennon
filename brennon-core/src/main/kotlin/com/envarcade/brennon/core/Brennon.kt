@@ -324,6 +324,10 @@ class Brennon(
         commandRegistry.register(KickCommand(this))
         commandRegistry.register(WarnCommand(this))
         commandRegistry.register(HistoryCommand(this))
+        commandRegistry.register(IpBanCommand(this))
+        commandRegistry.register(UnIpBanCommand(this))
+        commandRegistry.register(LookupCommand(this))
+        commandRegistry.register(EditPunishmentCommand(this))
 
         // Rank commands
         commandRegistry.register(RankCommand(this))

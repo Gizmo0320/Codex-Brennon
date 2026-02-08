@@ -10,4 +10,7 @@ interface PlayerRepository {
     fun save(player: PlayerData): CompletableFuture<Void>
     fun delete(uuid: UUID): CompletableFuture<Void>
     fun exists(uuid: UUID): CompletableFuture<Boolean>
+    fun findByIp(ip: String): CompletableFuture<List<PlayerData>>
+    fun countAll(): CompletableFuture<Long>
+    fun findRecent(limit: Int, offset: Int): CompletableFuture<List<PlayerData>>
 }
