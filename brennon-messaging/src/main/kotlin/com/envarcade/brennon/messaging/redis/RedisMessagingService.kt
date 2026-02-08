@@ -7,6 +7,7 @@ import redis.clients.jedis.JedisPool
 import redis.clients.jedis.JedisPoolConfig
 import redis.clients.jedis.JedisPubSub
 import redis.clients.jedis.params.SetParams
+import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -28,7 +29,7 @@ class RedisMessagingService(private val config: RedisConfig) : MessagingService 
             testOnBorrow = true
             testWhileIdle = true
             blockWhenExhausted = false
-            maxWaitMillis = config.timeout.toLong()
+            setMaxWait(Duration.ofMillis(config.timeout.toLong()))
         }
 
         jedisPool = if (config.password.isNotBlank()) {

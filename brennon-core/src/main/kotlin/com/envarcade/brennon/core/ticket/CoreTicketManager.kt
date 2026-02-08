@@ -59,7 +59,7 @@ class CoreTicketManager(
                 messaging.publish(Channels.TICKET_CREATE, Packet.serialize(packet))
                 messaging.publish(Channels.STAFF_ALERT, "[Ticket] New ticket $ticketId by $creatorName: $subject")
 
-                CoreTicket(ticketData) as Ticket
+                CoreTicket(ticketData)
             }
         }
     }

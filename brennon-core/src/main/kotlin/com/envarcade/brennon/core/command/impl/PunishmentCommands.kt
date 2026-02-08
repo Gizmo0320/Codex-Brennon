@@ -39,7 +39,7 @@ class BanCommand(private val brennon: Brennon) : BrennonCommand(
             }
 
             val target = opt.get()
-            brennon.corePunishmentManager.ban(target.uniqueId, reason, duration, sender.uuid).thenAccept { punishment ->
+            brennon.corePunishmentManager.ban(target.uniqueId, reason, duration, sender.uuid).thenAccept { _ ->
                 val durationStr = TimeUtil.formatDuration(duration)
                 sender.sendMessage(TextUtil.success(
                     "Banned <white>${target.name}</white> for <white>$durationStr</white>: <white>$reason</white>"
@@ -339,9 +339,11 @@ class HistoryCommand(private val brennon: Brennon) : BrennonCommand(
         return when (args.size) {
             1 -> brennon.corePlayerManager.getOnlinePlayers().map { it.getName() }
                 .filter { it.lowercase().startsWith(args[0].lowercase()) }
-            2 -> if (sender.hasPermission("brennon.admin.crossnetwork"))
+            2 -> if (sender.hasPermission("brennon.admin.crossnetwork")) {
                 listOf("--all-networks").filter { it.startsWith(args[1], ignoreCase = true) }
-            else emptyList()
+            } else {
+                emptyList()
+            }
             else -> emptyList()
         }
     }
@@ -383,7 +385,7 @@ class IpBanCommand(private val brennon: Brennon) : BrennonCommand(
                 return@thenAccept
             }
 
-            brennon.corePunishmentManager.ipBan(target.uniqueId, ip, reason, duration, sender.uuid).thenAccept { punishment ->
+            brennon.corePunishmentManager.ipBan(target.uniqueId, ip, reason, duration, sender.uuid).thenAccept { _ ->
                 val durationStr = TimeUtil.formatDuration(duration)
                 sender.sendMessage(TextUtil.success(
                     "IP banned <white>${target.name}</white> (<white>$ip</white>) for <white>$durationStr</white>: <white>$reason</white>"
